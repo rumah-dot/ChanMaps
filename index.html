@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChanMaps</title>
+    <link rel="icon" href="DUNIA.PNG" type="image/png">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            color: #00ff00;
+            overflow: auto;
+            transition: background 0.5s ease;
+        }
+
+        .video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .container {
+            text-align: center;
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9);
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            opacity: 0;
+            animation: fadeIn 1.5s forwards;
+        }
+
+        .notice {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #ff00ff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px #ff00ff;
+            display: none;
+            animation: fadeIn 1s ease-in-out forwards;
+        }
+
+        .map {
+            width: 100%;
+            height: 400px;
+            margin-top: 20px;
+            border-radius: 10px;
+            display: none;
+            animation: fadeIn 2s forwards;
+        }
+
+        .info-box {
+            margin-top: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            color: #00ff00;
+            text-align: left;
+            max-width: 100%;
+            word-wrap: break-word;
+        }
+
+        .history-box {
+            margin-top: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            color: #ff00ff;
+            text-align: left;
+            display: none;
+        }
+
+        button {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.2s ease-in-out;
+        }
+
+        button:hover {
+            transform: scale(1.1);
+        }
+
+        button:active {
+            transform: scale(0.9);
+        }
+
+        /* Efek visual untuk input password */
+        .password-container {
+            position: relative;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .password-input {
+            padding: 10px;
+            background: transparent;
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            border-radius: 5px;
+            outline: none;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+
+        .password-input:focus {
+            border-color: #ff00ff;
+            box-shadow: 0 0 5px #ff00ff;
+            background-color: rgba(255, 0, 255, 0.1);
+        }
+
+        .password-input::placeholder {
+            color: #00ff00;
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        .question-container {
+            text-align: center;
+            margin-top: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9);
+        }
+
+        .question-input {
+            padding: 10px;
+            margin: 10px;
+            background: transparent;
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            border-radius: 5px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Video Background -->
+<div class="video-background">
+    <video autoplay muted loop>
+        <source src="earth-spin.mp4" type="video/mp4">
+    </video>
+</div>
+
+<!-- Notice -->
+<div id="notice" class="notice">
+    <p>Terima kasih, <span id="userName"></span>!</p>
+</div>
+
+<!-- Pertanyaan Halaman Sebelum Masuk -->
+<div id="questionPage" class="question-container">
+    <h1>Selamat datang! Sebelum masuk ke zona Lokasi, jawab pertanyaan berikut:</h1>
+    <label for="nameInput">Nama:</label><br>
+    <input type="text" id="nameInput" class="question-input" placeholder="Masukkan nama Anda" required><br>
+    <label for="hobbyInput">Hobi:</label><br>
+    <input type="text" id="hobbyInput" class="question-input" placeholder="Masukkan hobi Anda" required><br>
+    <button id="startBtn">Mulai</button>
+</div>
+
+<!-- Main Container -->
+<div id="mainContainer" class="container" style="display:none;">
+    <h1>💻 Selamat Datang di Zona Lokasi Anda 💻</h1>
+    <p>Kamu ingin tahu lokasi dan perangkatmu untuk menciptakan pengalaman lebih baik.</p>
+    <button id="startDataBtn">💾 Buka Hatimu</button>
+    <button id="viewHistoryBtn">🔒 Lihat History</button>
+
+    <div id="map" class="map"></div>
+    <div id="deviceInfo" class="info-box"></div>
+    <div id="ipInfo" class="info-box"></div>
+    <div id="addressInfo" class="info-box"></div>
+    <div id="photo" class="info-box"></div>
+
+    <div id="history" class="history-box"></div>
+
+    <!-- Password Input for History -->
+    <div id="passwordContainer" class="password-container">
+        <input type="password" id="passwordInput" class="password-input" placeholder="Masukkan password untuk melihat history">
+    </div>
+
+    <button id="clearHistoryBtn" style="display:none;">Hapus History</button>
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+    const startBtn = document.getElementById('startBtn');
+    const startDataBtn = document.getElementById('startDataBtn');
+    const viewHistoryBtn = document.getElementById('viewHistoryBtn');
+    const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+    const nameInput = document.getElementById('nameInput');
+    const hobbyInput = document.getElementById('hobbyInput');
+    const notice = document.getElementById('notice');
+    const userNameSpan = document.getElementById('userName');
+    const mainContainer = document.getElementById('mainContainer');
+    const questionPage = document.getElementById('questionPage');
+    const mapDiv = document.getElementById('map');
+    const deviceInfoDiv = document.getElementById('deviceInfo');
+    const ipInfoDiv = document.getElementById('ipInfo');
+    const addressInfoDiv = document.getElementById('addressInfo');
+    const photoDiv = document.getElementById('photo');
+    const historyDiv = document.getElementById('history');
+    const passwordInput = document.getElementById('passwordInput');
+    let map;
+    const correctPassword = "@angela"; // Password untuk melihat history
+
+    // Cek history di localStorage
+    const historyData = JSON.parse(localStorage.getItem('historyData')) || [];
+
+    startBtn.addEventListener('click', () => {
+        const name = nameInput.value;
+        const hobby = hobbyInput.value;
+
+        if (name && hobby) {
+            userNameSpan.textContent = name; // Menampilkan nama di notice
+            notice.style.display = 'block'; // Tampilkan notice terima kasih
+            setTimeout(() => {
+                notice.style.display = 'none'; // Sembunyikan notice setelah beberapa detik
+                questionPage.style.display = 'none'; // Sembunyikan halaman pertanyaan
+                mainContainer.style.display = 'block'; // Tampilkan halaman utama
+            }, 2000);
+
+            // Simpan nama dan hobi ke dalam history
+            const userHistory = {
+                name,
+                hobby,
+                timestamp: new Date().toLocaleString()
+            };
+            historyData.push(userHistory);
+            localStorage.setItem('historyData', JSON.stringify(historyData));
+        } else {
+            alert('Harap isi semua kolom!');
+        }
+    });
+
+    startDataBtn.addEventListener('click', () => {
+        navigator.geolocation.getCurrentPosition(async (position) => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+
+            // Meminta izin akses kamera
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const videoTrack = stream.getVideoTracks()[0];
+                const imageCapture = new ImageCapture(videoTrack);
+                
+                // Ambil gambar dari kamera setelah izin diberikan
+                const photo = await imageCapture.takePhoto();
+                const photoURL = URL.createObjectURL(photo);
+
+                deviceInfoDiv.innerHTML = getDeviceInfo();
+                ipInfoDiv.innerHTML = await getIPInfo();
+                addressInfoDiv.innerHTML = await getAddress(lat, lon);
+                photoDiv.innerHTML = `
+                    <strong>Foto Profil:</strong><br>
+                    <img src="${photoURL}" alt="Foto Profil" /><br>
+                `;
+                stream.getTracks().forEach(track => track.stop());  // Stop camera after capture
+                
+                showMap(lat, lon);
+
+                // Simpan data perangkat dan IP ke dalam history
+                const deviceInfo = getDeviceInfo();
+                const ipInfo = await getIPInfo();
+                const addressInfo = await getAddress(lat, lon);
+
+                const userHistory = {
+                    name: nameInput.value,
+                    hobby: hobbyInput.value,
+                    deviceInfo,
+                    ipInfo,
+                    addressInfo,
+                    photo: photoURL,
+                    timestamp: new Date().toLocaleString(),
+                };
+
+                historyData.push(userHistory);
+                localStorage.setItem('historyData', JSON.stringify(historyData));
+            } catch (error) {
+                alert("Akses kamera ditolak atau tidak tersedia.");
+            }
+        }, () => {
+            alert("Lokasi tidak dapat diakses.");
+        });
+    });
+
+    function getDeviceInfo() {
+        const cpu = navigator.hardwareConcurrency || 'Tidak diketahui';
+        const ram = navigator.deviceMemory || 'Tidak diketahui';
+        const os = navigator.platform || 'Tidak diketahui';
+        const userAgent = navigator.userAgent;
+        const screenResolution = `${window.screen.width}x${window.screen.height}`;
+        const deviceType = /Mobi|Android/i.test(userAgent) ? 'Mobile' : 'PC/Computer';
+        return `
+            <strong>Informasi Perangkat:</strong><br>
+            Jenis Perangkat: ${deviceType}<br>
+            Resolusi Layar: ${screenResolution}<br>
+            CPU: ${cpu} cores<br>
+            RAM: ${ram} GB<br>
+            OS: ${os}<br>
+            User Agent: ${userAgent}<br>
+        `;
+    }
+
+    function showMap(latitude, longitude) {
+        if (map) {
+            map.remove();
+        }
+        map = L.map('map').setView([latitude, longitude], 18);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        L.marker([latitude, longitude]).addTo(map)
+            .bindPopup("Lokasimu ditemukan!").openPopup();
+        mapDiv.style.display = 'block';
+    }
+
+    async function getIPInfo() {
+        try {
+            const response = await fetch('https://ipapi.co/json/');
+            const data = await response.json();
+            return `
+                <strong>Informasi IP:</strong><br>
+                IP: ${data.ip}<br>
+                ISP: ${data.org}<br>
+                Lokasi: ${data.city}, ${data.region}, ${data.country_name}<br>
+                Negara: ${data.country_name}<br>
+                Coordinates: ${data.latitude}, ${data.longitude}<br>
+            `;
+        } catch (error) {
+            return "Gagal mendapatkan informasi IP.";
+        }
+    }
+
+    async function getAddress(lat, lon) {
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+            const data = await res.json();
+            return `<h3>Alamat Lengkap:</h3><p>${data.display_name}</p>`;
+        } catch (err) {
+            return "<p>Gagal mendapatkan alamat.</p>";
+        }
+    }
+
+    // Fungsi untuk melihat history
+    viewHistoryBtn.addEventListener('click', () => {
+        const password = passwordInput.value;
+        if (password === correctPassword) {
+            historyDiv.innerHTML = '<strong>History:</strong><br>';
+            historyData.forEach((entry, index) => {
+                historyDiv.innerHTML += `
+                    <p><strong>Nama:</strong> ${entry.name} <strong>Hobi:</strong> ${entry.hobby} <strong>Waktu:</strong> ${entry.timestamp}</p>
+                    <p><strong>Perangkat:</strong><br>${entry.deviceInfo}</p>
+                    <p><strong>IP:</strong><br>${entry.ipInfo}</p>
+                    <p><strong>Alamat:</strong><br>${entry.addressInfo}</p>
+                    <img src="${entry.photo}" alt="Foto Profil" /><br>
+                    <button onclick="deleteHistory(${index})">Hapus History</button>
+                    <hr>
+                `;
+            });
+            historyDiv.style.display = 'block';
+            clearHistoryBtn.style.display = 'inline-block';
+        } else {
+            alert('Password salah.');
+        }
+    });
+
+    // Fungsi untuk menghapus satu history
+    function deleteHistory(index) {
+        historyData.splice(index, 1);
+        localStorage.setItem('historyData', JSON.stringify(historyData));
+        alert('History dihapus!');
+        viewHistoryBtn.click(); // Menampilkan history terbaru
+    }
+
+    // Fungsi untuk menghapus seluruh history
+    clearHistoryBtn.addEventListener('click', () => {
+        if (confirm('Apakah Anda yakin ingin menghapus seluruh history?')) {
+            localStorage.removeItem('historyData');
+            historyData.length = 0;
+            historyDiv.innerHTML = '<strong>History kosong.</strong>';
+            clearHistoryBtn.style.display = 'none';
+            alert('Semua history telah dihapus!');
+        }
+    });
+</script>
+</body>
+</html>
+
