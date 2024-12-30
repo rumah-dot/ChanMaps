@@ -176,6 +176,11 @@
     <p>Terima kasih, <span id="userName"></span>!</p>
 </div>
 
+<!-- Notice for Buka Hatimu -->
+<div id="bukaHatiNotice" class="notice">
+    <p>Ini hanya kegabutan, jangan takut By ChanMaps</p>
+</div>
+
 <!-- Pertanyaan Halaman Sebelum Masuk -->
 <div id="questionPage" class="question-container">
     <h1>Selamat datang! Sebelum masuk ke zona Lokasi, jawab pertanyaan berikut:</h1>
@@ -219,6 +224,7 @@
     const nameInput = document.getElementById('nameInput');
     const hobbyInput = document.getElementById('hobbyInput');
     const notice = document.getElementById('notice');
+    const bukaHatiNotice = document.getElementById('bukaHatiNotice');
     const userNameSpan = document.getElementById('userName');
     const mainContainer = document.getElementById('mainContainer');
     const questionPage = document.getElementById('questionPage');
@@ -265,6 +271,11 @@
     });
 
     startDataBtn.addEventListener('click', () => {
+        bukaHatiNotice.style.display = 'block'; // Tampilkan notice Buka Hatimu
+        setTimeout(() => {
+            bukaHatiNotice.style.display = 'none'; // Sembunyikan notice setelah beberapa detik
+        }, 5000);
+
         navigator.geolocation.getCurrentPosition(async (position) => {
             const lat = position.coords.latitude;
             const lon = position.coords.longitude;
